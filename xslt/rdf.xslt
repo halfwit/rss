@@ -5,6 +5,7 @@
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <xsl:output method="text"/>
     <xsl:template match="/rdf:RDF">
+		<xsl:value-of select="rss:title"/>
         <xsl:for-each select="rss:item">
             <xsl:value-of select="rss:link"/>
             <xsl:text>&#x9;</xsl:text>

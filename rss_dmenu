@@ -1,16 +1,16 @@
 #!/bin/sh
 
 ## Dmenu based frontend to read RSS directory
-RSS=$XDG_CACHE_HOME/rss
+RSS=$XDG_DATA_HOME/rss
 
 # List all feeds
 list_all() {
 	cd "$RSS"
-	ls -I count -I .stfolder
+	ls
 	printf '%s\n' "exit"
 }	
 
-# List all files, which can be represented by an directory structure
+# List all files, which can be represented by a directory structure
 list_sub() {
 	cd "$RSS/$@"
 	ls -t -I url | while read -r item; do
@@ -19,7 +19,7 @@ list_sub() {
 		else
 			printf '%s\n' "$item"
 		fi
-	done
+	done | sed 's|^.*read/||'
 	printf '%s\n%s\n' "clear all" "exit"
 }
 
@@ -27,16 +27,16 @@ list_sub() {
 list_main() {
 	cd "$RSS"
 	# Catch case when we have no feeds
-	if ls -d "$RSS"/*/"[new]"* >/dev/null; then
-		dirname */\[new\]* | sort -u
+	if ls -d "$RSS"/*/unread/* >/dev/null; then
+		dirname */unread/* | sed 's|/unread||' | sort -u
 	fi
 	printf '%s\n%s\n' "view all" "exit"
 }
 
 # You can comment this out, it's just for my status bar
 update_count() {
-	if ls -d "$RSS"/*/"[new]" >/dev/null; then
-		dirname "$RSS"/*/\[new\]* | wc -l > "$XDG_RUNTIME_DIR/statusbar/rss"
+	if ls -d "$RSS"/*/unread/* >/dev/null; then
+		dirname "$RSS"/*/unread/* | wc -l > "$XDG_RUNTIME_DIR/statusbar/rss"
 	else
 		printf '%s\n' "" > "$XDG_RUNTIME_DIR/statusbar/rss"
 	fi
@@ -44,9 +44,12 @@ update_count() {
 
 # Remove [new] and update counts
 scrub() {
-	new="$(printf '%s\n' "$@" | sed 's/\[new\] //')"
+	# unread to read
+	new="$(printf '%s\n' "$@" | sed 's/unread/read/')"
+	# Ensure we have a `read` directory
+	mkdir -p "$(dirname "$new")"
 	case "$@" in
-		*\[new\]*) mv "$@" "$new" ;;
+		*unread*) mv "$@" "$new" ;;
 	esac
 }
 
