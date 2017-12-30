@@ -75,7 +75,13 @@ handle() {
 						update_count
 						printf '%s\n' "$@" ;;
 			view\ all)	printf '%s\n' "all" ;;
-			*)			test -f "$RSS/$@/$in" && plumb "$@/$in" || plumb "$in" ;;
+			*)			if test -f "$RSS/$@/read/$in"; then
+							plumb "$@/read/$in"
+						else if test -f "$RSS/$@/unread/$in"; then
+							plumb "$@/unread/$in"
+						else
+							plumb "$in"
+						fi ;;
 		esac
 	done
 }
