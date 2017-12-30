@@ -1,5 +1,5 @@
 #!/bin/sh
-
+### CURRENTLY BROKEN ###
 ## Dmenu based frontend to read RSS directory
 RSS=$XDG_DATA_HOME/rss
 
@@ -77,7 +77,7 @@ handle() {
 			view\ all)	printf '%s\n' "all" ;;
 			*)			if test -f "$RSS/$@/read/$in"; then
 							plumb "$@/read/$in"
-						else if test -f "$RSS/$@/unread/$in"; then
+						elif test -f "$RSS/$@/unread/$in"; then
 							plumb "$@/unread/$in"
 						else
 							plumb "$in"
