@@ -69,7 +69,7 @@ handle() {
 		case "$in" in
 			# Exit has to be from non-function
 			exit)   	update_count; printf '%s\n' "exit" ;;
-			clear\ all) for i in "$RSS/$@"/*; do
+			clear\ all) for i in "$RSS/$@"/unread/*; do
 							scrub "$i"
 						done 
 						update_count
