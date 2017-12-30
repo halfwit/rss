@@ -17,6 +17,8 @@ tree "$XDG_DATA_HOME"/rss
  | - - some other unread title
  | - read
  | - - all of our read titles
+ | some\ other\ feed
+ | ...
  
  cat "$XDG_DATA_HOME/rss/myfeed of awesomeness/unread/some unread title"
  $ https://myfeed.com/some_unread_title.html
