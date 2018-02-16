@@ -10,7 +10,7 @@ install:
 	@mkdir -p ${DESTDIR}${PREFIX}/share/rss_xslt
 	@cp -Rf xslt/* ${DESTDIR}${PREFIX}/share/rss_xslt
 	@chmod -R 755 ${DESTDIR}${PREFIX}/share/rss_xslt/*
-	@cp -Rf rss_dmenu ${DESTDIR}${PREFIX}/bin/rss_dmenu
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/rss_dmenu
+	@cp -Rf rss ${DESTDIR}${PREFIX}/bin/rss
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/rss
 
 .PHONY: install
