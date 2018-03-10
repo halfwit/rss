@@ -54,25 +54,30 @@ scrub() {
 }
 
 plumb() {
-	plumber < "$RSS/$@" >/dev/null &
-	scrub "$RSS/$@"
+	plumber < "$@" >/dev/null &
+	scrub "$@"
 }
 
 # Read all selections and plumb any good result
 handle() {
 	# Build command to call rss
-	case $@ in
+	case "$@" in
 		# Remove all entries in unread
 		Clear*)	for i in "$RSS/${@#*Clear }"/unread/*; do { scrub "$i"; }; done
 			  exec $0 main	;;
 		View*)	  exec $0 all	;;
-		*unread*) plumb "$@"	;;
-		*read*)	  plumb "$@"	;;
 		Back)	  exec $0 main	;;
 		Exit) 	  exit 0	;;
-		*)        exec $0 "$@"	;;
+		*)        if test -d "$RSS/$@"; then
+				exec $0 "$@"
+			  else
+				plumb "$RSS/$CHAN/"*"/$@"      
+			  fi ;;
 	esac
 }
+
+# If we're passed in a channel, save it for later
+CHAN="$@"
 
 # If we have no arguments, run our main list
 test -z "$1" && set -- main
