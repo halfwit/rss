@@ -72,7 +72,7 @@ handle() {
 		*unread*) plumb "$@"	;;
 		*read*)	  plumb "$@"	;;
 		Back)	  exec $0 main	;;
-		Exit) 	  exit 0		;;
+		Exit) 	  exit 0	;;
 		*)        exec $0 "$@"	;;
 	esac
 }
