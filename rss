@@ -21,11 +21,7 @@ list_sub() {
 
 # Helper function to do a nested search on sh
 list_new() {
-	ls "$RSS" | while read -r dir; do
-		for i in "$dir"/unread/*; do
-			test -f "$i" && dirname "$i"
-		done
-	done
+	find "$RSS"/*/unread -type f | sed 's|.*rss/||;s|/.*||'
 }
 
 # List all feeds with unread content
