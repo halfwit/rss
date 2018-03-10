@@ -1,48 +1,42 @@
 #!/bin/sh
-### CURRENTLY BROKEN ###
 ## Dmenu based frontend to read RSS directory
+
 RSS=$XDG_DATA_HOME/rss
+trap 'update_count' EXIT
 
 # List all feeds
 list_all() {
-	cd "$RSS"
-	ls
-	printf '%s\n' "exit"
+	cd "$RSS" && ls
+	printf '%s\n%s\n' "Back" "Exit"
 }	
 
-# List all files, which can be represented by a directory structure
+# List all feeds. Some titles can be expressed as a directory (since `/` is not a valid character in filenames, we allow `$RSS/read/myfeed/something neat for my title with a / in it`.)
 list_sub() {
-	cd "$RSS/$@"
-	ls -t -I url | while read -r item; do
-		if test -d "$item"; then
-			find "$item" -type f
-		else
-			printf '%s\n' "$item"
-		fi
-	done | sed 's|^.*read/||'
-	printf '%s\n%s\n' "clear all" "exit"
+	find "$RSS/$@" -type f | sed 's|^.*read/||'
+	printf '%s\n%s\n%s\n' "Back" "Clear Unread" "Exit"
 }
 
-# List all files with [new] in title
+# Helper function to do a nested search on sh
+list_new() {
+	ls "$RSS" | while read -r dir; do
+		for i in "$dir"/unread/*; do
+			test -f "$i" && dirname "$i"
+		done
+	done
+}
+
+# List all feeds with unread content
 list_main() {
-	cd "$RSS"
-	# Catch case when we have no feeds
-	if ls -d "$RSS"/*/unread/* >/dev/null; then
-		dirname */unread/* | sed 's|/unread||' | sort -u
-	fi
-	printf '%s\n%s\n' "view all" "exit"
+	list_new | sed 's|/unread||' | sort -u
+	printf '%s\n%s\n' "View All" "Exit"
 }
 
 # You can comment this out, it's just for my status bar
 update_count() {
-	if ls -d "$RSS"/*/unread/* >/dev/null; then
-		dirname "$RSS"/*/unread/* | wc -l > "$XDG_RUNTIME_DIR/statusbar/rss"
-	else
-		printf '%s\n' "" > "$XDG_RUNTIME_DIR/statusbar/rss"
-	fi
+	list_new | wc -l > "$XDG_RUNTIME_DIR/statusbar/rss"
 }
 
-# Remove [new] and update counts
+# Move from unread to read
 scrub() {
 	# unread to read
 	new="$(printf '%s\n' "$@" | sed 's/unread/read/')"
@@ -54,51 +48,37 @@ scrub() {
 }
 
 plumb() {
-	if test -d "$RSS/$@"; then
-		printf '%s\n' "$@"
-	else
-		plumber < "$RSS/$@" >/dev/null &
-		scrub "$RSS/$@"
-		printf '%s\n' "exit"
-	fi
+	plumber < "$RSS/$@" >/dev/null &
+	scrub "$RSS/$@"
 }
 
 # Read all selections and plumb any good result
 handle() {
-	while read -r in; do
-		case "$in" in
-			# Exit has to be from non-function
-			exit)   	update_count; printf '%s\n' "exit" ;;
-			clear\ all) for i in "$RSS/$@"/unread/*; do
-							scrub "$i"
-						done 
-						update_count
-						printf '%s\n' "$@" ;;
-			view\ all)	printf '%s\n' "all" ;;
-			*)			if test -f "$RSS/$@/read/$in"; then
-							plumb "$@/read/$in"
-						elif test -f "$RSS/$@/unread/$in"; then
-							plumb "$@/unread/$in"
-						else
-							plumb "$in"
-						fi ;;
-		esac
-	done
-}
-
-# Run list based on result of previous actions
-switch() {
-	case "$@" in
-		main)	list_main     | dmenu -p "Select feed: " | handle "$@" ;;
-		all)	list_all      | dmenu -p "Select feed: " | handle "$@" ;;
-		*)		list_sub "$@" | dmenu -p "Select post: " | handle "$@" ;;
+	# Build command to call rss
+	case $@ in
+		# Remove all entries in unread
+		Clear*)		for i in "$RSS/$@"/unread/*; do
+						scrub "$i"
+					done 
+					exec $0 main ;;
+		View*)		exec $0 all  ;;
+		*unread*) 	plumb "$@" ;;
+		*read*)		plumb "$@" ;;
+		Back)		exec $0 main ;;
+		Exit) 		exit 0 		 ;;
+		*)			exec $0 "$@" ;;
 	esac
 }
 
-## Main loop
-while :; do
-	# Assume main if nothing set
-	test -z "$1" && set -- main
-	set -- "$(switch "$@")"
-	test "$1" = exit && exit 0
-done
+# If we have no arguments, run our main list
+test -z "$1" && set -- main
+
+# Set pipeline to run based on command-line arguments
+case "$@" in
+	main)	run() { list_main     | dmenu -p "Select feed: "; } ;;
+	all)	run() { list_all      | dmenu -p "Select feed: "; } ;; 
+	*)		run() { list_sub "$@" | dmenu -p "Select post: "; } ;;
+esac
+
+# Ugly inline-while loop, but hey.
+run "$@" | while read -r input; do { handle "$input"; }; done
