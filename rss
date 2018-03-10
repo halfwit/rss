@@ -2,6 +2,9 @@
 ## Dmenu based frontend to read RSS directory
 
 RSS=$XDG_DATA_HOME/rss
+
+# File for unread count, adjust to suit your setup
+UNREADCOUNT="$XDG_RUNTIME_DIR"/statusbar/rss
 trap 'update_count' EXIT
 
 # List all feeds
@@ -31,9 +34,15 @@ list_main() {
 	printf '%s\n%s\n' "View All" "Exit"
 }
 
-# You can comment this out, it's just for my status bar
+# This, you can simply change to a single printf
+# If you prefer an unread count of 0 in your file
+# `list_new | wc -l > "$UNREADCOUNT"`
 update_count() {
-	list_new | wc -l > "$XDG_RUNTIME_DIR/statusbar/rss"
+	unread="$(list_new | wc -l)"
+	case "$unread" in
+		0)	echo -n > "$UNREADCOUNT" 						;;
+		*)  printf '%s unread\n' "$unread" > "$UNREADCOUNT" ;; 
+	esac
 }
 
 # Move from unread to read
