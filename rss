@@ -16,7 +16,7 @@ list_all() {
 # List all feeds. Some titles can be expressed as a directory (since `/` is not a valid character in filenames, we allow `$RSS/read/myfeed/something neat for my title with a / in it`.)
 list_sub() {
 	find "$RSS/$@" -type f | sed 's|^.*read/||'
-	printf '%s\n%s\n%s\n' "Back" "Clear Unread" "Exit"
+	printf '%s\n%s\n%s\n' "Back" "Clear $@" "Exit"
 }
 
 # Helper function to do a nested search on sh
@@ -51,9 +51,10 @@ scrub() {
 	new="$(printf '%s\n' "$@" | sed 's/unread/read/')"
 	# Ensure we have a `read` directory
 	mkdir -p "$(dirname "$new")"
-	case "$@" in
-		*unread*) mv "$@" "$new" ;;
-	esac
+	# Test that we are passed in an `unread` dir, properly
+	if printf '%s\n' "$@" | grep -q unread; then
+		mv "$@" "$new"
+	fi
 }
 
 plumb() {
@@ -66,7 +67,7 @@ handle() {
 	# Build command to call rss
 	case $@ in
 		# Remove all entries in unread
-		Clear*)	  for i in "$RSS/$@"/unread/*; do { scrub "$i"; }; done
+		Clear*)	for i in "$RSS/${@#*Clear }"/unread/*; do { scrub "$i"; }; done
 			  exec $0 main	;;
 		View*)	  exec $0 all	;;
 		*unread*) plumb "$@"	;;
