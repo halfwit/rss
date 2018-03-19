@@ -37,7 +37,7 @@ update_count() {
 	unread="$(list_new | wc -l)"
 	case "$unread" in
 		0)	echo -n > "$UNREADCOUNT" 						;;
-		*)  printf '%s unread\n' "$unread" > "$UNREADCOUNT" ;; 
+		*)  printf '%s \n' "$unread" > "$UNREADCOUNT" ;; 
 	esac
 }
 
