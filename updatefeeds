@@ -20,6 +20,9 @@ fetch() {
 	curl -sSfL "$1" | xsltproc "$XSLT" - | build
 }
 
+# Test network
+ping -c 1 -w 10 www.google.com >/dev/null 2>&1 || exit 0
+
 while read -r url; do
 	fetch "$url"
 done < "$XDG_DATA_HOME"/feedurls
