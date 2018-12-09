@@ -15,7 +15,7 @@ list_all() {
 
 # List all feeds. Some titles can be expressed as a directory (since `/` is not a valid character in filenames, we allow `$RSS/read/myfeed/something neat for my title with a / in it`.)
 list_sub() {
-	find "$RSS/$@" -type f -printf "%T+\t%p\n" | sort -r | sed 's|^.*read/||'
+	find "$RSS/$@" -type f | xe stat -q -f '%m %N' | sort -r | xe basename
 	printf '%s\n%s\n%s\n' "Back" "Clear $@" "Exit"
 }
 
