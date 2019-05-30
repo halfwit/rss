@@ -15,7 +15,7 @@ list_all() {
 
 # List all feeds. Some titles can be expressed as a directory (since `/` is not a valid character in filenames, we allow `$RSS/read/myfeed/something neat for my title with a / in it`.)
 list_sub() {
-	find "$RSS/$@" -type f | xe stat -q -f '%m %N' | sort -r | xe basename
+	find "$RSS/$@" -type f | xe stat -c '%y %n' | sort -r | xe basename
 	printf '%s\n%s\n%s\n' "Back" "Clear $@" "Exit"
 }
 
@@ -68,11 +68,15 @@ handle() {
 		View*)	  exec $0 all	;;
 		Back)	  exec $0 main	;;
 		Exit) 	  exit 0	;;
-		*)        if test -d "$RSS/$@"; then
-				exec $0 "$@"
-			  else
-				plumb "$RSS/$CHAN/"*"/$@"      
-			  fi ;;
+		*)        # Some times $@ can contain trailing spaces
+				  if test -d "$RSS/$@"; then
+				  	  exec $0 "$@"
+			      elif test -d "$RSS/$@ "; then
+				      echo gotcha
+					  exec $0 "$@ "
+				  else
+				      plumb "$RSS/$CHAN/"*"/$@"      
+				  fi ;;
 	esac
 }
 
@@ -86,7 +90,7 @@ test -z "$1" && set -- main
 case "$@" in
 	main) run() { list_main     | dmenu -p "Select feed: "; } ;;
 	all)  run() { list_all      | dmenu -p "Select feed: "; } ;;
-	*)    run() { list_sub "$@" | dmenu -p "Select post: "; } ;;
+	*) 	  run() { list_sub "$@" | dmenu -p "Select post: "; } ;;
 esac
 
 # Ugly inline-while loop, but hey.
